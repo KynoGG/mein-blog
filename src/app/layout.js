@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/components/AuthProvider';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { GateProvider } from '@/components/GateProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display' });
@@ -33,15 +34,17 @@ export default function RootLayout({ children }) {
     <html lang="de" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable}`}>
         <ServiceWorkerRegistration />
-        <AuthProvider>
-          <ThemeProvider>
-            <div className="site-wrapper">
-              <Header />
-              {children}
-              <Footer />
-            </div>
-          </ThemeProvider>
-        </AuthProvider>
+        <GateProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <div className="site-wrapper">
+                <Header />
+                {children}
+                <Footer />
+              </div>
+            </ThemeProvider>
+          </AuthProvider>
+        </GateProvider>
       </body>
     </html>
   );
