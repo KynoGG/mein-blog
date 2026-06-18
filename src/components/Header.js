@@ -110,11 +110,6 @@ export default function Header() {
     <>
       <header className="site-header">
         <div className="header-inner">
-          <Link href="/" className="site-logo" aria-label="LIVORA – Startseite">
-            <img src="/logo-schwarz.png" alt="LIVORA" className="site-logo-img site-logo-light" />
-            <img src="/logo-weiss.png"  alt="LIVORA" className="site-logo-img site-logo-dark" />
-          </Link>
-
           <nav className="header-nav">
             {searchOpen ? (
               <form onSubmit={handleSearch} className="search-form">
