@@ -545,18 +545,65 @@ export default function DashboardPage() {
                       )}
                     </div>
                   )}
-                  {hasSportGoal && (
-                    <div className="db-bars-card db-today-col">
-                      <p className="section-label" style={{ marginBottom: 10 }}>⚡ Sport heute</p>
-                      <MacroBar label="Trainingsminuten" emoji="⏱️" current={data.sportMinuten} goal={zMin} unit="Min." />
-                      {data.einheiten === 0 && (
-                        <p className="db-hint" style={{ marginTop: 8 }}>
-                          Noch kein Training eingetragen.{' '}
-                          <Link href="/tracker/sport" className="db-hint-link">Jetzt eintragen →</Link>
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  {hasSportGoal && (() => {
+                    // Plan-basierte Berechnung
+                    const planTag        = aktivTP?.tage[selectedDay];
+                    const uebungen       = planTag?.uebungen ?? [];
+                    const doneSaetze     = trainingDone
+                      ? uebungen.reduce((a, u) => a + u.saetze, 0)
+                      : [...checkedEx].reduce((a, i) => a + (uebungen[i]?.saetze ?? 0), 0);
+                    const totalSaetze    = uebungen.reduce((a, u) => a + u.saetze, 0);
+                    const minDone        = Math.round(doneSaetze * 3);
+                    const minTotal       = Math.max(zMin, Math.round(totalSaetze * 3));
+                    const kcalDone       = Math.round(minDone * 6);
+                    const kcalTotal      = Math.round(minTotal * 6);
+                    const hasPlan        = uebungen.length > 0;
+
+                    return (
+                      <div className="db-bars-card db-today-col">
+                        <p className="section-label" style={{ marginBottom: 10 }}>⚡ Sport heute</p>
+                        {hasPlan ? (
+                          <>
+                            <MacroBar
+                              label="Trainingsminuten"
+                              emoji="⏱️"
+                              current={minDone}
+                              goal={minTotal}
+                              unit="Min."
+                            />
+                            <MacroBar
+                              label="Kcal verbrannt (ca.)"
+                              emoji="🔥"
+                              current={kcalDone}
+                              goal={kcalTotal}
+                              unit="kcal"
+                              accentColor="var(--cat-fitness)"
+                            />
+                            {!trainingDone && doneSaetze === 0 && (
+                              <p className="db-hint" style={{ marginTop: 8 }}>
+                                Hake unten Übungen ab, um deinen Fortschritt zu tracken.
+                              </p>
+                            )}
+                            {trainingDone && (
+                              <p className="db-hint" style={{ marginTop: 8, color: 'var(--cat-fitness)' }}>
+                                ✓ Heutiges Training abgeschlossen!
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <MacroBar label="Trainingsminuten" emoji="⏱️" current={data.sportMinuten} goal={zMin} unit="Min." />
+                            {data.einheiten === 0 && (
+                              <p className="db-hint" style={{ marginTop: 8 }}>
+                                Noch kein Training eingetragen.{' '}
+                                <Link href="/tracker/sport" className="db-hint-link">Jetzt eintragen →</Link>
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}

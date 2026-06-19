@@ -1,37 +1,20 @@
 'use client';
 
 import { useAuth } from './AuthProvider';
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useGate } from './GateProvider';
 
-const AuthModal = dynamic(() => import('./AuthModal'), { ssr: false });
-
+// Da GateProvider die gesamte App schützt, ist AuthGate nie sichtbar.
+// Trotzdem als named export für bestehende Imports.
 export function AuthGate() {
-  const [authOpen, setAuthOpen] = useState(false);
-  return (
-    <>
-      <main className="main-content">
-        <div className="tracker-page">
-          <div className="auth-gate">
-            <div className="auth-gate-icon">🔒</div>
-            <h2 className="auth-gate-title">Anmeldung erforderlich</h2>
-            <p className="auth-gate-sub">
-              Dieser Bereich ist nur für angemeldete Nutzer zugänglich.
-            </p>
-            <button className="tracker-submit auth-gate-btn" onClick={() => setAuthOpen(true)}>
-              Jetzt anmelden
-            </button>
-          </div>
-        </div>
-      </main>
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
-    </>
-  );
+  return null;
 }
 
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
+  const gate = useGate();
+
   if (loading) return null;
-  if (!user) return <AuthGate />;
-  return children;
+  // Gate-Login gilt als vollständige Anmeldung
+  if (gate?.authed || user) return children;
+  return null;
 }

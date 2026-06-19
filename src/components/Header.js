@@ -6,6 +6,7 @@ import { useAuth } from './AuthProvider';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { auth } from '@/lib/supabase';
+import { gateWriteSession, GATE_SESSION_KEY } from '@/lib/gateUsers';
 import dynamic from 'next/dynamic';
 
 const AuthModal = dynamic(() => import('./AuthModal'), { ssr: false });
@@ -35,9 +36,10 @@ const NAV_ITEMS_AUTH = [
   {
     label: 'Life Hub',
     dropdown: [
-      { href: '/kalender', label: 'Kalender' },
-      { href: '/todo',     label: 'To-do'    },
-      { href: '/notizen',  label: 'Notizen'  },
+      { href: '/kalender',      label: 'Kalender'      },
+      { href: '/todo',          label: 'To-do'         },
+      { href: '/notizen',       label: 'Notizen'       },
+      { href: '/einkaufsliste', label: 'Einkaufsliste' },
     ],
   },
 ];
@@ -99,7 +101,8 @@ export default function Header() {
 
   async function handleSignOut() {
     await auth.signOut();
-    setMenuOpen(false);
+    localStorage.removeItem(GATE_SESSION_KEY);
+    window.location.reload();
   }
 
   const shortEmail = user?.email
