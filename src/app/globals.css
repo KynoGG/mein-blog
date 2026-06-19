@@ -43,6 +43,13 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* iOS: Verhindert Auto-Zoom bei Eingabefeldern (font-size mind. 16px) */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background: var(--bg);
