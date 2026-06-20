@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/lib/supabase';
 import { gateReadSession } from '@/lib/gateUsers';
-import { syncToCloud } from '@/lib/cloudSync';
+import { syncToCloud, syncFromCloud } from '@/lib/cloudSync';
 
 const AuthContext = createContext(null);
 
@@ -12,7 +12,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Wenn Gate-Session aktiv → synthetischen User setzen
     const gateUser = gateReadSession();
     if (gateUser) {
       setUser({ id: `gate:${gateUser}`, username: gateUser, isGateUser: true });
@@ -20,7 +19,11 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    auth.getSession().then(({ data: { session } }) => {
+    // On session restore: pull from cloud so data is always up to date
+    auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user?.id) {
+        await syncFromCloud(session.user.id);
+      }
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -32,13 +35,28 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Push local data to cloud every 30 s while logged in
   useEffect(() => {
     if (!user?.id || user?.isGateUser) return;
-    const id = setInterval(() => syncToCloud(user.id), 30_000);
-    // Also push immediately when user becomes active
+
+    // Push every 30 s and immediately on login
     syncToCloud(user.id);
-    return () => clearInterval(id);
+    const pushInterval = setInterval(() => syncToCloud(user.id), 30_000);
+
+    // Pull when user switches back to this tab (e.g. from another device check)
+    function onVisible() {
+      if (document.visibilityState === 'visible') {
+        syncFromCloud(user.id).then(pulled => {
+          // Force pages to re-read localStorage by dispatching a storage event
+          if (pulled) window.dispatchEvent(new Event('kynogg-sync'));
+        });
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(pushInterval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [user?.id]);
 
   return (
