@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/lib/supabase';
 import { gateReadSession } from '@/lib/gateUsers';
+import { syncToCloud } from '@/lib/cloudSync';
 
 const AuthContext = createContext(null);
 
@@ -30,6 +31,15 @@ export function AuthProvider({ children }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Push local data to cloud every 30 s while logged in
+  useEffect(() => {
+    if (!user?.id || user?.isGateUser) return;
+    const id = setInterval(() => syncToCloud(user.id), 30_000);
+    // Also push immediately when user becomes active
+    syncToCloud(user.id);
+    return () => clearInterval(id);
+  }, [user?.id]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

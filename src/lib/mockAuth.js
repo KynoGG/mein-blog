@@ -1,4 +1,5 @@
 import { isUsernameTaken, isValidUsername, upsertUser, readRegistry, writeRegistry } from './userRegistry';
+import { syncFromCloud, syncToCloud } from './cloudSync';
 
 const STORAGE_KEY = 'kynogg-demo-session';
 
@@ -65,6 +66,8 @@ export const mockAuth = {
       username: existing?.username ?? null,
     };
     writeSession(user);
+    // Pull cloud data so all devices see the same entries
+    await syncFromCloud(expectedId);
     notify('SIGNED_IN', { user });
     return { error: null };
   },
@@ -89,6 +92,8 @@ export const mockAuth = {
   },
 
   async signOut() {
+    const user = readSession();
+    if (user?.id) await syncToCloud(user.id);
     writeSession(null);
     notify('SIGNED_OUT', null);
     return { error: null };
